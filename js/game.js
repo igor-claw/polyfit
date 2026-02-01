@@ -50,6 +50,10 @@ class PolyFitGame {
             this.resetPuzzle();
         });
         
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            this.undoLastMove();
+        });
+        
         // Win modal
         document.getElementById('next-level-btn').addEventListener('click', () => {
             this.hideWinModal();
@@ -116,6 +120,7 @@ class PolyFitGame {
         
         this.showScreen('game-screen');
         this.calculateCellSize();
+        this.updateUndoButton();
     }
     
     calculateCellSize() {
@@ -214,9 +219,27 @@ class PolyFitGame {
         pieceEl.addEventListener('mousedown', (e) => this.onDragStart(e, index));
         pieceEl.addEventListener('touchstart', (e) => this.onDragStart(e, index), { passive: false });
         
-        // Rotation on click (if not dragging)
+        // Rotation on click/tap (if not dragging)
+        // Track tap start position to distinguish tap from drag
+        let tapStartX = 0, tapStartY = 0;
+        
+        pieceEl.addEventListener('mousedown', (e) => {
+            tapStartX = e.clientX;
+            tapStartY = e.clientY;
+        });
+        
+        pieceEl.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                tapStartX = e.touches[0].clientX;
+                tapStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
         pieceEl.addEventListener('click', (e) => {
-            if (!this.wasDragging) {
+            const dx = Math.abs(e.clientX - tapStartX);
+            const dy = Math.abs(e.clientY - tapStartY);
+            // Only rotate if barely moved (tap, not drag)
+            if (dx < 10 && dy < 10 && !this.wasDragging) {
                 this.rotatePiece(index);
             }
             this.wasDragging = false;
@@ -437,6 +460,7 @@ class PolyFitGame {
         
         this.renderGrid();
         this.renderPieces();
+        this.updateUndoButton();
         
         // Check win condition
         if (this.checkWin()) {
@@ -505,6 +529,36 @@ class PolyFitGame {
             
             setTimeout(() => confetti.remove(), 4000);
         }
+    }
+    
+    undoLastMove() {
+        if (this.placedPieces.length === 0) return;
+        
+        const lastPlacement = this.placedPieces.pop();
+        const piece = this.pieces[lastPlacement.pieceIndex];
+        const shape = this.getRotatedShape(piece.shape, lastPlacement.rotation);
+        
+        // Remove from grid
+        for (let py = 0; py < shape.length; py++) {
+            for (let px = 0; px < shape[py].length; px++) {
+                if (!shape[py][px]) continue;
+                const gx = lastPlacement.gridX + px;
+                const gy = lastPlacement.gridY + py;
+                this.grid[gy][gx] = null;
+            }
+        }
+        
+        // Mark piece as not placed
+        piece.placed = false;
+        
+        this.renderGrid();
+        this.renderPieces();
+        this.updateUndoButton();
+    }
+    
+    updateUndoButton() {
+        const undoBtn = document.getElementById('undo-btn');
+        undoBtn.disabled = this.placedPieces.length === 0;
     }
     
     resetPuzzle() {

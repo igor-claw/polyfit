@@ -129,6 +129,16 @@ body {
     width: 50px;
 }
 
+.header-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+#undo-btn:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
 /* Level Grid */
 .level-grid {
     display: grid;
