@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="PolyFit - A relaxing polyomino puzzle game. Fit all shapes into the grid!">
+    <meta name="theme-color" content="#2C3E50">
+    <title>PolyFit - Puzzle Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Title Screen -->
+        <div id="title-screen" class="screen active">
+            <h1>PolyFit</h1>
+            <p class="subtitle">Fit the pieces. Solve the puzzle.</p>
+            <button id="play-btn" class="btn primary">Play</button>
+        </div>
+
+        <!-- Level Select Screen -->
+        <div id="level-screen" class="screen">
+            <div class="header">
+                <button id="back-to-title" class="btn icon">←</button>
+                <h2>Select Level</h2>
+                <div class="spacer"></div>
+            </div>
+            <div id="level-grid" class="level-grid">
+                <!-- Levels populated by JS -->
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <button id="back-to-levels" class="btn icon">←</button>
+                <h2 id="level-title">Level 1</h2>
+                <button id="reset-btn" class="btn icon">↻</button>
+            </div>
+            <div id="game-container">
+                <div id="grid-container">
+                    <div id="grid"></div>
+                </div>
+                <div id="piece-tray"></div>
+            </div>
+        </div>
+
+        <!-- Win Modal -->
+        <div id="win-modal" class="modal">
+            <div class="modal-content">
+                <h2>🎉 Solved!</h2>
+                <p id="win-message">Great job!</p>
+                <div class="modal-buttons">
+                    <button id="next-level-btn" class="btn primary">Next Level</button>
+                    <button id="levels-btn" class="btn">All Levels</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <script src="js/puzzles.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
