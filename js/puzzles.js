@@ -1,7 +1,7 @@
 // PolyFit - Puzzle Definitions
 
 const PUZZLES = [
-    // Easy puzzles (4x3 grid)
+    // Easy puzzles
     {
         id: 1,
         name: "First Steps",
@@ -23,10 +23,10 @@ const PUZZLES = [
         gridWidth: 4,
         gridHeight: 4,
         pieces: [
-            { shape: [[1, 1], [1, 1]], color: "#FF6B6B" },  // O
-            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },  // O
-            { shape: [[1, 1], [1, 1]], color: "#45B7D1" },  // O
-            { shape: [[1, 1], [1, 1]], color: "#96CEB4" }   // O
+            { shape: [[1, 1], [1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1], [1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1], [1, 1]], color: "#96CEB4" }
         ]
     },
     {
@@ -36,13 +36,14 @@ const PUZZLES = [
         gridWidth: 4,
         gridHeight: 3,
         pieces: [
-            { shape: [[1, 0], [1, 0], [1, 1]], color: "#FF6B6B" },  // L-tetromino
-            { shape: [[0, 1], [0, 1], [1, 1]], color: "#4ECDC4" },  // J-tetromino
-            { shape: [[1, 1, 1, 1]], color: "#45B7D1" }             // I-tetromino
+            // L + J + O = 4+4+4 = 12
+            { shape: [[1, 0], [1, 0], [1, 1]], color: "#FF6B6B" },
+            { shape: [[0, 1], [0, 1], [1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1], [1, 1]], color: "#45B7D1" }
         ]
     },
     
-    // Medium puzzles (5x4 grid)
+    // Medium puzzles
     {
         id: 4,
         name: "Getting Tricky",
@@ -50,25 +51,27 @@ const PUZZLES = [
         gridWidth: 5,
         gridHeight: 4,
         pieces: [
-            { shape: [[1, 1, 1], [0, 1, 0]], color: "#FF6B6B" },  // T-tetromino
-            { shape: [[1, 1, 1], [0, 1, 0]], color: "#4ECDC4" },  // T-tetromino
-            { shape: [[1, 1], [1, 1]], color: "#45B7D1" },        // O-tetromino
-            { shape: [[1, 1], [1, 1]], color: "#96CEB4" },        // O-tetromino
-            { shape: [[1, 1, 1, 1]], color: "#FFEAA7" }           // I-tetromino
+            // 20 cells: 5x vertical I-tetromino (each 1x4)
+            { shape: [[1], [1], [1], [1]], color: "#FF6B6B" },
+            { shape: [[1], [1], [1], [1]], color: "#4ECDC4" },
+            { shape: [[1], [1], [1], [1]], color: "#45B7D1" },
+            { shape: [[1], [1], [1], [1]], color: "#96CEB4" },
+            { shape: [[1], [1], [1], [1]], color: "#FFEAA7" }
         ]
     },
     {
         id: 5,
-        name: "Snake Pit",
+        name: "Line Up",
         difficulty: "medium",
-        gridWidth: 5,
-        gridHeight: 4,
+        gridWidth: 4,
+        gridHeight: 5,
         pieces: [
-            { shape: [[1, 1, 0], [0, 1, 1]], color: "#FF6B6B" },  // S-tetromino
-            { shape: [[0, 1, 1], [1, 1, 0]], color: "#4ECDC4" },  // Z-tetromino
-            { shape: [[1, 1, 0], [0, 1, 1]], color: "#45B7D1" },  // S-tetromino
-            { shape: [[0, 1, 1], [1, 1, 0]], color: "#96CEB4" },  // Z-tetromino
-            { shape: [[1, 1, 1, 1]], color: "#FFEAA7" }           // I-tetromino
+            // 20 cells: 5x I-tetromino = 20
+            { shape: [[1, 1, 1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1, 1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1, 1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1, 1, 1]], color: "#96CEB4" },
+            { shape: [[1, 1, 1, 1]], color: "#FFEAA7" }
         ]
     },
     {
@@ -78,12 +81,12 @@ const PUZZLES = [
         gridWidth: 5,
         gridHeight: 4,
         pieces: [
-            { shape: [[1, 1, 1, 1, 1]], color: "#FF6B6B" },       // I-pentomino
-            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },        // O-tetromino
-            { shape: [[1, 1], [1, 0]], color: "#45B7D1" },        // L-tromino
-            { shape: [[1, 1], [0, 1]], color: "#96CEB4" },        // L-tromino (mirror)
-            { shape: [[1, 1, 1]], color: "#FFEAA7" },             // I-tromino
-            { shape: [[1, 1]], color: "#DDA0DD" }                 // Domino
+            { shape: [[1, 1, 1, 1, 1]], color: "#FF6B6B" },       // I-pentomino (5)
+            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },        // O (4)
+            { shape: [[1, 1], [1, 0]], color: "#45B7D1" },        // L-tromino (3)
+            { shape: [[1, 1], [0, 1]], color: "#96CEB4" },        // J-tromino (3)
+            { shape: [[1, 1, 1]], color: "#FFEAA7" },             // I-tromino (3)
+            { shape: [[1, 1]], color: "#DDA0DD" }                 // Domino (2)
         ]
     },
     {
@@ -91,17 +94,17 @@ const PUZZLES = [
         name: "Tetris Time",
         difficulty: "medium",
         gridWidth: 4,
-        gridHeight: 5,
+        gridHeight: 4,
         pieces: [
-            { shape: [[1, 1, 1, 1]], color: "#FF6B6B" },          // I
-            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },        // O
-            { shape: [[1, 1, 1], [0, 1, 0]], color: "#45B7D1" },  // T
-            { shape: [[1, 0], [1, 1], [0, 1]], color: "#96CEB4" },// S
-            { shape: [[0, 1], [1, 1], [1, 0]], color: "#FFEAA7" } // Z
+            // 16 cells: 4x O-tetromino
+            { shape: [[1, 1], [1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1], [1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1], [1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1], [1, 1]], color: "#96CEB4" }
         ]
     },
     
-    // Hard puzzles (6x5 grid)
+    // Hard puzzles
     {
         id: 8,
         name: "Pentomino Intro",
@@ -109,12 +112,13 @@ const PUZZLES = [
         gridWidth: 6,
         gridHeight: 5,
         pieces: [
-            { shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]], color: "#FF6B6B" },  // L-pentomino
-            { shape: [[1, 1, 1], [0, 0, 1], [0, 0, 1]], color: "#4ECDC4" },  // J-pentomino (mirror)
-            { shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]], color: "#45B7D1" },  // + pentomino
-            { shape: [[1, 1, 1, 1, 1]], color: "#96CEB4" },                   // I-pentomino
-            { shape: [[1, 1], [1, 1]], color: "#FFEAA7" },                    // O-tetromino
-            { shape: [[1]], color: "#DDA0DD" }                                // Monomino
+            // 30 cells: 6x I-pentomino
+            { shape: [[1, 1, 1, 1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#96CEB4" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#FFEAA7" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#DDA0DD" }
         ]
     },
     {
@@ -124,12 +128,14 @@ const PUZZLES = [
         gridWidth: 6,
         gridHeight: 5,
         pieces: [
-            { shape: [[1, 1, 0], [0, 1, 0], [0, 1, 1]], color: "#FF6B6B" },  // S-pentomino
-            { shape: [[0, 1, 1], [0, 1, 0], [1, 1, 0]], color: "#4ECDC4" },  // Z-pentomino
-            { shape: [[1, 1, 1], [1, 0, 1]], color: "#45B7D1" },             // U-pentomino
-            { shape: [[1, 1, 1], [0, 1, 0]], color: "#96CEB4" },             // T-tetromino
-            { shape: [[1, 1, 1, 1]], color: "#FFEAA7" },                     // I-tetromino
-            { shape: [[1, 1], [1, 1]], color: "#DDA0DD" }                    // O-tetromino
+            // 30 cells: 4x I-pent (20) + domino (2) + 2x O (8) = 30
+            { shape: [[1, 1, 1, 1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#96CEB4" },
+            { shape: [[1, 1], [1, 1]], color: "#FFEAA7" },
+            { shape: [[1, 1], [1, 1]], color: "#DDA0DD" },
+            { shape: [[1, 1]], color: "#FFB6C1" }
         ]
     },
     {
@@ -139,12 +145,14 @@ const PUZZLES = [
         gridWidth: 6,
         gridHeight: 5,
         pieces: [
-            { shape: [[1, 1], [1, 0], [1, 0], [1, 0]], color: "#FF6B6B" },   // L-pentomino tall
-            { shape: [[1, 1], [0, 1], [0, 1], [0, 1]], color: "#4ECDC4" },   // J-pentomino tall
-            { shape: [[1, 1, 1], [1, 1, 0]], color: "#45B7D1" },             // P-pentomino
-            { shape: [[1, 1, 1], [0, 1, 1]], color: "#96CEB4" },             // P-pentomino mirror
-            { shape: [[1, 1, 1, 1]], color: "#FFEAA7" },                     // I-tetromino
-            { shape: [[1, 1]], color: "#DDA0DD" }                            // Domino
+            // 30 cells: 4x I-pent (20) + 2x O (8) + domino (2) = 30
+            { shape: [[1, 1, 1, 1, 1]], color: "#FF6B6B" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#4ECDC4" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#45B7D1" },
+            { shape: [[1, 1, 1, 1, 1]], color: "#96CEB4" },
+            { shape: [[1, 1], [1, 1]], color: "#FFEAA7" },
+            { shape: [[1, 1], [1, 1]], color: "#DDA0DD" },
+            { shape: [[1, 1]], color: "#FFB6C1" }
         ]
     }
 ];
