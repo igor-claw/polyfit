@@ -11,10 +11,12 @@ class PolyFitGame {
         this.dragOffset = { x: 0, y: 0 };
         this.cellSize = 40;
         this.progress = this.loadProgress();
+        this.tutorialShown = this.loadTutorialState();
         
         this.initElements();
         this.initEventListeners();
         this.showScreen('title-screen');
+        this.updateSoundButton();
     }
     
     initElements() {
@@ -30,32 +32,51 @@ class PolyFitGame {
         this.levelGrid = document.getElementById('level-grid');
         this.winModal = document.getElementById('win-modal');
         this.confettiContainer = document.getElementById('confetti-container');
+        this.tutorialOverlay = document.getElementById('tutorial-overlay');
+        this.pieceCountEl = document.getElementById('piece-count');
     }
     
     initEventListeners() {
+        // Initialize audio on first interaction
+        document.addEventListener('click', () => audio.init(), { once: true });
+        document.addEventListener('touchstart', () => audio.init(), { once: true });
+        
         // Navigation
         document.getElementById('play-btn').addEventListener('click', () => {
+            audio.play('click');
             this.showLevelSelect();
         });
         
         document.getElementById('back-to-title').addEventListener('click', () => {
+            audio.play('click');
             this.showScreen('title-screen');
         });
         
         document.getElementById('back-to-levels').addEventListener('click', () => {
+            audio.play('click');
             this.showLevelSelect();
         });
         
         document.getElementById('reset-btn').addEventListener('click', () => {
+            audio.play('click');
             this.resetPuzzle();
         });
         
         document.getElementById('undo-btn').addEventListener('click', () => {
+            audio.play('undo');
             this.undoLastMove();
+        });
+        
+        // Sound toggle
+        document.getElementById('sound-btn').addEventListener('click', () => {
+            const enabled = audio.toggle();
+            this.updateSoundButton();
+            if (enabled) audio.play('click');
         });
         
         // Win modal
         document.getElementById('next-level-btn').addEventListener('click', () => {
+            audio.play('click');
             this.hideWinModal();
             if (this.currentPuzzleIndex < PUZZLES.length - 1) {
                 this.loadPuzzle(this.currentPuzzleIndex + 1);
@@ -65,15 +86,38 @@ class PolyFitGame {
         });
         
         document.getElementById('levels-btn').addEventListener('click', () => {
+            audio.play('click');
             this.hideWinModal();
             this.showLevelSelect();
         });
+        
+        // Tutorial dismiss
+        if (this.tutorialOverlay) {
+            this.tutorialOverlay.addEventListener('click', (e) => {
+                // Dismiss when clicking overlay background or the button
+                if (e.target === this.tutorialOverlay || 
+                    e.target.classList.contains('tutorial-dismiss')) {
+                    this.dismissTutorial();
+                }
+            });
+        }
         
         // Global mouse/touch events for dragging
         document.addEventListener('mousemove', (e) => this.onDragMove(e));
         document.addEventListener('mouseup', (e) => this.onDragEnd(e));
         document.addEventListener('touchmove', (e) => this.onDragMove(e), { passive: false });
         document.addEventListener('touchend', (e) => this.onDragEnd(e));
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => this.onKeyDown(e));
+    }
+    
+    updateSoundButton() {
+        const btn = document.getElementById('sound-btn');
+        if (btn) {
+            btn.textContent = audio.enabled ? '🔊' : '🔇';
+            btn.title = audio.enabled ? 'Mute' : 'Unmute';
+        }
     }
     
     // Screen Management
@@ -99,11 +143,14 @@ class PolyFitGame {
             }
             
             btn.innerHTML = `
-                ${index + 1}
-                <span class="difficulty-label" style="color: ${DIFFICULTY_COLORS[puzzle.difficulty]}">${puzzle.difficulty}</span>
+                <span class="level-number">${index + 1}</span>
+                <span class="difficulty-dot" style="background: ${DIFFICULTY_COLORS[puzzle.difficulty]}"></span>
             `;
             
-            btn.addEventListener('click', () => this.loadPuzzle(index));
+            btn.addEventListener('click', () => {
+                audio.play('click');
+                this.loadPuzzle(index);
+            });
             this.levelGrid.appendChild(btn);
         });
     }
@@ -111,7 +158,7 @@ class PolyFitGame {
     // Puzzle Loading
     loadPuzzle(index) {
         this.currentPuzzleIndex = index;
-        this.currentPuzzle = JSON.parse(JSON.stringify(PUZZLES[index])); // Deep copy
+        this.currentPuzzle = JSON.parse(JSON.stringify(PUZZLES[index]));
         this.levelTitle.textContent = this.currentPuzzle.name;
         
         this.initGrid();
@@ -121,6 +168,12 @@ class PolyFitGame {
         this.showScreen('game-screen');
         this.calculateCellSize();
         this.updateUndoButton();
+        this.updatePieceCount();
+        
+        // Show tutorial on first puzzle if not seen
+        if (index === 0 && !this.tutorialShown) {
+            this.showTutorial();
+        }
     }
     
     calculateCellSize() {
@@ -196,6 +249,9 @@ class PolyFitGame {
         const pieceEl = document.createElement('div');
         pieceEl.className = 'piece';
         pieceEl.dataset.index = index;
+        pieceEl.tabIndex = 0; // Make focusable for keyboard
+        pieceEl.setAttribute('role', 'button');
+        pieceEl.setAttribute('aria-label', `Piece ${index + 1}, ${this.describePiece(shape)}`);
         pieceEl.style.gridTemplateColumns = `repeat(${width}, 25px)`;
         pieceEl.style.gridTemplateRows = `repeat(${height}, 25px)`;
         
@@ -219,8 +275,7 @@ class PolyFitGame {
         pieceEl.addEventListener('mousedown', (e) => this.onDragStart(e, index));
         pieceEl.addEventListener('touchstart', (e) => this.onDragStart(e, index), { passive: false });
         
-        // Rotation on click/tap (if not dragging)
-        // Track tap start position to distinguish tap from drag
+        // Track tap position for rotation detection
         let tapStartX = 0, tapStartY = 0;
         
         pieceEl.addEventListener('mousedown', (e) => {
@@ -238,7 +293,6 @@ class PolyFitGame {
         pieceEl.addEventListener('click', (e) => {
             const dx = Math.abs(e.clientX - tapStartX);
             const dy = Math.abs(e.clientY - tapStartY);
-            // Only rotate if barely moved (tap, not drag)
             if (dx < 10 && dy < 10 && !this.wasDragging) {
                 this.rotatePiece(index);
             }
@@ -248,13 +302,16 @@ class PolyFitGame {
         return pieceEl;
     }
     
+    describePiece(shape) {
+        const cells = shape.flat().filter(c => c).length;
+        return `${cells} cells`;
+    }
+    
     getRotatedShape(shape, rotation) {
         let result = shape.map(row => [...row]);
-        
         for (let r = 0; r < rotation; r++) {
             result = this.rotate90(result);
         }
-        
         return result;
     }
     
@@ -269,13 +326,20 @@ class PolyFitGame {
                 rotated[x].push(shape[y][x]);
             }
         }
-        
         return rotated;
     }
     
     rotatePiece(index) {
         this.pieces[index].rotation = (this.pieces[index].rotation + 1) % 4;
+        audio.play('rotate');
         this.renderPieces();
+        
+        // Add rotation animation class
+        const pieceEl = this.trayEl.querySelector(`[data-index="${index}"]`);
+        if (pieceEl) {
+            pieceEl.classList.add('rotating');
+            setTimeout(() => pieceEl.classList.remove('rotating'), 150);
+        }
     }
     
     // Drag and Drop
@@ -287,6 +351,8 @@ class PolyFitGame {
         
         this.draggedPiece = pieceIndex;
         this.wasDragging = false;
+        
+        audio.play('pickup');
         
         const pieceEl = e.currentTarget;
         const rect = pieceEl.getBoundingClientRect();
@@ -308,6 +374,9 @@ class PolyFitGame {
         document.body.appendChild(clone);
         
         pieceEl.style.opacity = '0.3';
+        
+        // Haptic feedback
+        this.vibrate(10);
     }
     
     onDragMove(e) {
@@ -325,7 +394,6 @@ class PolyFitGame {
             dragEl.style.top = `${clientY - this.dragOffset.y}px`;
         }
         
-        // Show preview on grid
         this.updatePreview(clientX, clientY);
     }
     
@@ -335,17 +403,20 @@ class PolyFitGame {
         const dragEl = document.getElementById('dragging-piece');
         if (dragEl) dragEl.remove();
         
-        // Reset opacity of original piece
         const origPieceEl = this.trayEl.querySelector(`[data-index="${this.draggedPiece}"]`);
         if (origPieceEl) origPieceEl.style.opacity = '1';
         
-        // Try to place piece
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
         
         const gridPos = this.getGridPosition(clientX, clientY);
         if (gridPos && this.canPlacePiece(this.draggedPiece, gridPos.x, gridPos.y)) {
             this.placePiece(this.draggedPiece, gridPos.x, gridPos.y);
+        } else if (gridPos) {
+            audio.play('invalid');
+            this.shakeGrid();
+        } else {
+            audio.play('drop');
         }
         
         this.clearPreview();
@@ -354,7 +425,7 @@ class PolyFitGame {
     
     getGridPosition(clientX, clientY) {
         const gridRect = this.gridEl.getBoundingClientRect();
-        const padding = 10; // Grid padding
+        const padding = 10;
         
         const x = Math.floor((clientX - gridRect.left - padding) / (this.cellSize + 2));
         const y = Math.floor((clientY - gridRect.top - padding) / (this.cellSize + 2));
@@ -363,7 +434,6 @@ class PolyFitGame {
             y >= 0 && y < this.currentPuzzle.gridHeight) {
             return { x, y };
         }
-        
         return null;
     }
     
@@ -419,19 +489,16 @@ class PolyFitGame {
                 const gx = gridX + px;
                 const gy = gridY + py;
                 
-                // Out of bounds
                 if (gx < 0 || gx >= this.currentPuzzle.gridWidth ||
                     gy < 0 || gy >= this.currentPuzzle.gridHeight) {
                     return false;
                 }
                 
-                // Already occupied
                 if (this.grid[gy][gx] !== null) {
                     return false;
                 }
             }
         }
-        
         return true;
     }
     
@@ -458,14 +525,40 @@ class PolyFitGame {
             rotation: piece.rotation
         });
         
+        audio.play('snap');
+        this.vibrate(15);
+        
         this.renderGrid();
         this.renderPieces();
         this.updateUndoButton();
+        this.updatePieceCount();
         
-        // Check win condition
+        // Add placement animation
+        this.animatePlacement(gridX, gridY, shape);
+        
         if (this.checkWin()) {
             this.onWin();
         }
+    }
+    
+    animatePlacement(gridX, gridY, shape) {
+        for (let py = 0; py < shape.length; py++) {
+            for (let px = 0; px < shape[py].length; px++) {
+                if (!shape[py][px]) continue;
+                const gx = gridX + px;
+                const gy = gridY + py;
+                const cell = this.gridEl.querySelector(`[data-x="${gx}"][data-y="${gy}"]`);
+                if (cell) {
+                    cell.classList.add('just-placed');
+                    setTimeout(() => cell.classList.remove('just-placed'), 300);
+                }
+            }
+        }
+    }
+    
+    shakeGrid() {
+        this.gridEl.classList.add('shake');
+        setTimeout(() => this.gridEl.classList.remove('shake'), 300);
     }
     
     checkWin() {
@@ -480,33 +573,32 @@ class PolyFitGame {
     }
     
     onWin() {
-        // Save progress
         if (!this.progress.completed.includes(this.currentPuzzle.id)) {
             this.progress.completed.push(this.currentPuzzle.id);
             this.saveProgress();
         }
         
-        // Show celebration
         setTimeout(() => {
+            audio.play('win');
+            this.vibrate([50, 30, 50]);
             this.showConfetti();
             this.showWinModal();
-        }, 300);
+        }, 400);
     }
     
     showWinModal() {
         const messages = [
-            "Perfect fit!",
-            "Great job!",
-            "Puzzle master!",
-            "Excellent work!",
-            "Nailed it!"
+            "Perfect fit! 🎯",
+            "Great job! ⭐",
+            "Puzzle master! 🧩",
+            "Excellent! 🎉",
+            "Nailed it! 💪"
         ];
         document.getElementById('win-message').textContent = 
             messages[Math.floor(Math.random() * messages.length)];
         
         this.winModal.classList.add('active');
         
-        // Hide next button if last level
         const nextBtn = document.getElementById('next-level-btn');
         nextBtn.style.display = this.currentPuzzleIndex < PUZZLES.length - 1 ? 'block' : 'none';
     }
@@ -517,10 +609,11 @@ class PolyFitGame {
     
     showConfetti() {
         const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+        const shapes = ['square', 'circle'];
         
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 60; i++) {
             const confetti = document.createElement('div');
-            confetti.className = 'confetti';
+            confetti.className = 'confetti ' + shapes[Math.floor(Math.random() * shapes.length)];
             confetti.style.left = `${Math.random() * 100}%`;
             confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
             confetti.style.animationDelay = `${Math.random() * 0.5}s`;
@@ -538,7 +631,6 @@ class PolyFitGame {
         const piece = this.pieces[lastPlacement.pieceIndex];
         const shape = this.getRotatedShape(piece.shape, lastPlacement.rotation);
         
-        // Remove from grid
         for (let py = 0; py < shape.length; py++) {
             for (let px = 0; px < shape[py].length; px++) {
                 if (!shape[py][px]) continue;
@@ -548,12 +640,12 @@ class PolyFitGame {
             }
         }
         
-        // Mark piece as not placed
         piece.placed = false;
         
         this.renderGrid();
         this.renderPieces();
         this.updateUndoButton();
+        this.updatePieceCount();
     }
     
     updateUndoButton() {
@@ -561,8 +653,77 @@ class PolyFitGame {
         undoBtn.disabled = this.placedPieces.length === 0;
     }
     
+    updatePieceCount() {
+        if (this.pieceCountEl) {
+            const remaining = this.pieces.filter(p => !p.placed).length;
+            this.pieceCountEl.textContent = `${remaining} piece${remaining !== 1 ? 's' : ''} left`;
+        }
+    }
+    
     resetPuzzle() {
         this.loadPuzzle(this.currentPuzzleIndex);
+    }
+    
+    // Tutorial
+    showTutorial() {
+        if (this.tutorialOverlay) {
+            this.tutorialOverlay.classList.add('active');
+        }
+    }
+    
+    dismissTutorial() {
+        if (this.tutorialOverlay) {
+            this.tutorialOverlay.classList.remove('active');
+        }
+        this.tutorialShown = true;
+        this.saveTutorialState();
+    }
+    
+    loadTutorialState() {
+        try {
+            return localStorage.getItem('polyfit-tutorial') === 'done';
+        } catch {
+            return false;
+        }
+    }
+    
+    saveTutorialState() {
+        try {
+            localStorage.setItem('polyfit-tutorial', 'done');
+        } catch {}
+    }
+    
+    // Keyboard Support
+    onKeyDown(e) {
+        // Only when game screen is active
+        if (!this.screens.game.classList.contains('active')) return;
+        
+        switch (e.key) {
+            case 'Escape':
+                this.showLevelSelect();
+                break;
+            case 'r':
+            case 'R':
+                // Rotate first unplaced piece (simple implementation)
+                const unplaced = this.pieces.findIndex(p => !p.placed);
+                if (unplaced !== -1) {
+                    this.rotatePiece(unplaced);
+                }
+                break;
+            case 'z':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    this.undoLastMove();
+                }
+                break;
+        }
+    }
+    
+    // Haptic feedback
+    vibrate(pattern) {
+        if (navigator.vibrate) {
+            navigator.vibrate(pattern);
+        }
     }
     
     // Progress persistence
@@ -578,9 +739,7 @@ class PolyFitGame {
     saveProgress() {
         try {
             localStorage.setItem('polyfit-progress', JSON.stringify(this.progress));
-        } catch {
-            // Ignore storage errors
-        }
+        } catch {}
     }
 }
 

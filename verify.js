@@ -1,87 +1,10 @@
 #!/usr/bin/env node
 // Puzzle Solver - Verify all puzzles are solvable
 
-const PUZZLES = [
-    {
-        id: 1, name: "First Steps", difficulty: "easy", gridWidth: 4, gridHeight: 3,
-        pieces: [
-            { shape: [[1, 1], [1, 0]] }, { shape: [[1, 1, 1]] },
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1]] }, { shape: [[1]] }
-        ]
-    },
-    {
-        id: 2, name: "Building Blocks", difficulty: "easy", gridWidth: 4, gridHeight: 4,
-        pieces: [
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] },
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] }
-        ]
-    },
-    {
-        id: 3, name: "L is for Learn", difficulty: "easy", gridWidth: 4, gridHeight: 3,
-        pieces: [
-            { shape: [[1, 0], [1, 0], [1, 1]] },
-            { shape: [[0, 1], [0, 1], [1, 1]] },
-            { shape: [[1, 1], [1, 1]] }
-        ]
-    },
-    {
-        id: 4, name: "Getting Tricky", difficulty: "medium", gridWidth: 5, gridHeight: 4,
-        pieces: [
-            { shape: [[1], [1], [1], [1]] }, { shape: [[1], [1], [1], [1]] },
-            { shape: [[1], [1], [1], [1]] }, { shape: [[1], [1], [1], [1]] },
-            { shape: [[1], [1], [1], [1]] }
-        ]
-    },
-    {
-        id: 5, name: "Line Up", difficulty: "medium", gridWidth: 4, gridHeight: 5,
-        pieces: [
-            { shape: [[1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1]] }
-        ]
-    },
-    {
-        id: 6, name: "Mixed Bag", difficulty: "medium", gridWidth: 5, gridHeight: 4,
-        pieces: [
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1], [1, 1]] },
-            { shape: [[1, 1], [1, 0]] }, { shape: [[1, 1], [0, 1]] },
-            { shape: [[1, 1, 1]] }, { shape: [[1, 1]] }
-        ]
-    },
-    {
-        id: 7, name: "Tetris Time", difficulty: "medium", gridWidth: 4, gridHeight: 4,
-        pieces: [
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] },
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] }
-        ]
-    },
-    {
-        id: 8, name: "Pentomino Intro", difficulty: "hard", gridWidth: 6, gridHeight: 5,
-        pieces: [
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] }
-        ]
-    },
-    {
-        id: 9, name: "Complex Shapes", difficulty: "hard", gridWidth: 6, gridHeight: 5,
-        pieces: [
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] },
-            { shape: [[1, 1]] }
-        ]
-    },
-    {
-        id: 10, name: "Master Challenge", difficulty: "hard", gridWidth: 6, gridHeight: 5,
-        pieces: [
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1, 1, 1, 1]] }, { shape: [[1, 1, 1, 1, 1]] },
-            { shape: [[1, 1], [1, 1]] }, { shape: [[1, 1], [1, 1]] },
-            { shape: [[1, 1]] }
-        ]
-    }
-];
+const fs = require('fs');
+const puzzleCode = fs.readFileSync(__dirname + '/js/puzzles.js', 'utf8')
+    .replace(/^const /gm, 'var ');
+eval(puzzleCode);
 
 function getRotations(shape) {
     const rotations = [shape];
@@ -161,20 +84,39 @@ function countPieceCells(pieces) {
     return total;
 }
 
-console.log("PolyFit Puzzle Verification\n" + "=".repeat(50));
+console.log("PolyFit Puzzle Verification\n" + "=".repeat(60));
 let allSolvable = true;
+let easyCount = 0, medCount = 0, hardCount = 0;
 
 for (const puzzle of PUZZLES) {
     const gridSize = puzzle.gridWidth * puzzle.gridHeight;
     const piecesCells = countPieceCells(puzzle.pieces);
-    process.stdout.write(`Puzzle ${puzzle.id}: "${puzzle.name}" (${puzzle.difficulty}) [${puzzle.gridWidth}x${puzzle.gridHeight}=${gridSize}, pieces=${piecesCells}]`);
-    if (piecesCells !== gridSize) { console.log(` ❌ CELL MISMATCH`); allSolvable = false; continue; }
+    const tag = `[${puzzle.difficulty.toUpperCase().padEnd(6)}]`;
+    
+    process.stdout.write(`${tag} Puzzle ${String(puzzle.id).padStart(2)}: "${puzzle.name.padEnd(18)}" `);
+    process.stdout.write(`${puzzle.gridWidth}x${puzzle.gridHeight}=${String(gridSize).padStart(2)}, ${puzzle.pieces.length} pieces `);
+    
+    if (piecesCells !== gridSize) { 
+        console.log(`❌ CELL MISMATCH (${piecesCells} vs ${gridSize})`); 
+        allSolvable = false; 
+        continue; 
+    }
+    
     const grid = Array.from({ length: puzzle.gridHeight }, () => new Array(puzzle.gridWidth).fill(0));
     const solvable = solve(grid, puzzle.pieces, 0);
-    console.log(solvable ? ` ✅` : ` ❌ NO SOLUTION`);
-    if (!solvable) allSolvable = false;
+    
+    if (solvable) {
+        console.log(`✅`);
+        if (puzzle.difficulty === 'easy') easyCount++;
+        else if (puzzle.difficulty === 'medium') medCount++;
+        else hardCount++;
+    } else {
+        console.log(`❌ NO SOLUTION`);
+        allSolvable = false;
+    }
 }
 
-console.log("\n" + "=".repeat(50));
+console.log("\n" + "=".repeat(60));
+console.log(`Summary: ${easyCount} easy, ${medCount} medium, ${hardCount} hard`);
 console.log(allSolvable ? "All puzzles verified! ✅" : "Some puzzles have issues! ❌");
 process.exit(allSolvable ? 0 : 1);

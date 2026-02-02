@@ -4,7 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="description" content="PolyFit - A relaxing polyomino puzzle game. Fit all shapes into the grid!">
-    <meta name="theme-color" content="#2C3E50">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="PolyFit - Puzzle Game">
+    <meta property="og:description" content="A relaxing polyomino puzzle game. Fit all shapes into the grid!">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/og-image.png">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+    
     <title>PolyFit - Puzzle Game</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -15,14 +31,20 @@
             <h1>PolyFit</h1>
             <p class="subtitle">Fit the pieces. Solve the puzzle.</p>
             <button id="play-btn" class="btn primary">Play</button>
+            <p class="version">15 puzzles · v1.0</p>
         </div>
 
         <!-- Level Select Screen -->
         <div id="level-screen" class="screen">
             <div class="header">
-                <button id="back-to-title" class="btn icon">←</button>
+                <button id="back-to-title" class="btn icon" aria-label="Back to title">←</button>
                 <h2>Select Level</h2>
                 <div class="spacer"></div>
+            </div>
+            <div class="difficulty-legend">
+                <span><span class="difficulty-dot" style="background: #4ECDC4"></span> Easy</span>
+                <span><span class="difficulty-dot" style="background: #FFEAA7"></span> Medium</span>
+                <span><span class="difficulty-dot" style="background: #FF6B6B"></span> Hard</span>
             </div>
             <div id="level-grid" class="level-grid">
                 <!-- Levels populated by JS -->
@@ -32,25 +54,30 @@
         <!-- Game Screen -->
         <div id="game-screen" class="screen">
             <div class="header">
-                <button id="back-to-levels" class="btn icon">←</button>
+                <button id="back-to-levels" class="btn icon" aria-label="Back to levels">←</button>
                 <h2 id="level-title">Level 1</h2>
                 <div class="header-buttons">
-                    <button id="undo-btn" class="btn icon" title="Undo">↩</button>
-                    <button id="reset-btn" class="btn icon" title="Reset">↻</button>
+                    <button id="sound-btn" class="btn icon" title="Toggle sound">🔊</button>
+                    <button id="undo-btn" class="btn icon" title="Undo" aria-label="Undo last move">↩</button>
+                    <button id="reset-btn" class="btn icon" title="Reset" aria-label="Reset puzzle">↻</button>
                 </div>
             </div>
             <div id="game-container">
                 <div id="grid-container">
-                    <div id="grid"></div>
+                    <div id="grid" role="application" aria-label="Puzzle grid"></div>
                 </div>
-                <div id="piece-tray"></div>
+                <div id="tray-container">
+                    <div id="piece-count" class="piece-count"></div>
+                    <div id="piece-tray" role="list" aria-label="Available pieces"></div>
+                    <p class="tray-hint">Tap piece to rotate</p>
+                </div>
             </div>
         </div>
 
         <!-- Win Modal -->
-        <div id="win-modal" class="modal">
+        <div id="win-modal" class="modal" role="dialog" aria-labelledby="win-title">
             <div class="modal-content">
-                <h2>🎉 Solved!</h2>
+                <h2 id="win-title">🎉 Solved!</h2>
                 <p id="win-message">Great job!</p>
                 <div class="modal-buttons">
                     <button id="next-level-btn" class="btn primary">Next Level</button>
@@ -58,11 +85,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tutorial Overlay -->
+        <div id="tutorial-overlay" class="tutorial-overlay" role="dialog" aria-label="Tutorial">
+            <div class="tutorial-content">
+                <h3>How to Play</h3>
+                <div class="tutorial-steps">
+                    <div class="tutorial-step">
+                        <span class="tutorial-icon">👆</span>
+                        <p><strong>Drag</strong> pieces from the tray onto the grid</p>
+                    </div>
+                    <div class="tutorial-step">
+                        <span class="tutorial-icon">🔄</span>
+                        <p><strong>Tap</strong> a piece to rotate it</p>
+                    </div>
+                    <div class="tutorial-step">
+                        <span class="tutorial-icon">🧩</span>
+                        <p><strong>Fill</strong> the entire grid to win!</p>
+                    </div>
+                </div>
+                <button class="btn primary tutorial-dismiss">Got it!</button>
+            </div>
+        </div>
     </div>
 
-    <div id="confetti-container"></div>
+    <div id="confetti-container" aria-hidden="true"></div>
 
     <script src="js/puzzles.js"></script>
+    <script src="js/audio.js"></script>
     <script src="js/game.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .catch((err) => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
