@@ -1,6 +1,6 @@
 // PolyFit Service Worker - Offline Support
 
-const CACHE_NAME = 'polyfit-v1';
+const CACHE_NAME = 'polyfit-v2';
 const ASSETS = [
     '/',
     '/index.html',
@@ -8,7 +8,9 @@ const ASSETS = [
     '/js/puzzles.js',
     '/js/audio.js',
     '/js/game.js',
-    '/manifest.json'
+    '/manifest.json',
+    '/assets/icon-192.png',
+    '/assets/icon-512.png'
 ];
 
 // Install - cache assets

@@ -1,0 +1,25 @@
+{
+  "name": "polyfit",
+  "version": "1.0.0",
+  "description": "A minimalist polyomino packing puzzle game for web and mobile.",
+  "main": "sw.js",
+  "scripts": {
+    "verify": "node verify.js",
+    "icons": "node -e \"const sharp=require('sharp'),fs=require('fs'),svg=fs.readFileSync('./assets/icon.svg');Promise.all([sharp(svg).resize(192,192).png().toFile('./assets/icon-192.png'),sharp(svg).resize(512,512).png().toFile('./assets/icon-512.png'),sharp(svg).resize(512,512).png().toFile('./assets/icon-maskable-512.png')]).then(()=>console.log('Icons generated!')).catch(console.error);\"",
+    "test": "node verify.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igor-claw/polyfit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/igor-claw/polyfit/issues"
+  },
+  "homepage": "https://github.com/igor-claw/polyfit#readme",
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}
